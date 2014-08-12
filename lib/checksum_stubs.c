@@ -21,8 +21,6 @@
 #include <caml/fail.h>
 #include <caml/bigarray.h>
 
-#ifdef __x86_64__
-
 /* WARNING: This code assumes that it is running on a little endian machine (x86) */
 static inline uint16_t
 htons(uint16_t v)
@@ -40,7 +38,20 @@ static uint16_t
 ones_complement_checksum_bigarray(unsigned char *addr, size_t ofs, size_t count, uint64_t sum64)
 {
   addr += ofs;
-  uint64_t *data64 = (uint64_t *) addr;
+  uint64_t *data64;
+
+  /* If we're not 8-byte aligned, process bytes until we are.
+   * Note: assumes we're 2-byte aligned at least. */
+  while (((uintptr_t) addr) & 7 && count > 1) {
+    uint16_t v = *((uint16_t *) addr);
+    sum64 += v;
+    if (sum64 < v) sum64++;
+    count -= 2;
+    addr += 2;
+  }
+
+  data64 = (uint64_t *) addr;
+
   while (count >= 8) {
     uint64_t s = *data64++;
     sum64 += s;
@@ -116,6 +127,16 @@ caml_tcpip_ones_complement_checksum_list(value v_cstruct_list)
       overflow = 0;
       addr++;
       count--;
+    }
+
+    /* If we're not 8-byte aligned, process bytes until we are.
+     * Note: assumes we're 2-byte aligned at least. */
+    while (((uintptr_t) addr) & 7 && count > 1) {
+      uint16_t v = *((uint16_t *) addr);
+      sum64 += v;
+      if (sum64 < v) sum64++;
+      count -= 2;
+      addr += 2;
     }
 
     data64 = (uint64_t *) addr;
@@ -243,91 +264,3 @@ caml_tcpip_ones_complement_checksum_list(value v_cstruct_list)
   checksum = htons(~sum64);
   CAMLreturn(Val_int(checksum));
 }
-
-#else		/* Generic implementation */
-
-static uint32_t
-checksum_bigarray(unsigned char *addr, size_t ofs, size_t count, uint32_t sum)
-{
-  addr += ofs;
-  while (count > 1) {
-    uint16_t v = (*addr << 8) + (*(addr+1));
-    sum += v;
-    count -= 2;
-    addr += 2;
-  }
-  if (count > 0)
-    sum += (*(unsigned char *)addr) << 8;
-  while (sum >> 16)
-    sum = (sum & 0xffff) + (sum >> 16);
-  return sum;
-}
-
-CAMLprim value
-caml_tcpip_ones_complement_checksum(value v_cstruct)
-{
-  CAMLparam1(v_cstruct);
-  CAMLlocal3(v_ba, v_ofs, v_len);
-  uint32_t sum = 0;
-  uint16_t checksum = 0;
-  v_ba = Field(v_cstruct, 0);
-  v_ofs = Field(v_cstruct, 1);
-  v_len = Field(v_cstruct, 2);
-  sum = checksum_bigarray(Caml_ba_data_val(v_ba), Int_val(v_ofs), Int_val(v_len), 0);
-  checksum = ~sum;
-  CAMLreturn(Val_int(checksum));
-}
-
-/* Checksum a list of cstruct.ts. The complexity of overflow is due to
- * having potentially odd-sized buffers, and the odd byte must be carried
- * forward as 16-byte 1s complement addition if there are more buffers in
- * the chain. */
-CAMLprim value
-caml_tcpip_ones_complement_checksum_list(value v_cstruct_list)
-{
-  CAMLparam1(v_cstruct_list);
-  CAMLlocal4(v_hd, v_ba, v_ofs, v_len);
-  uint32_t sum = 0;
-  uint16_t checksum = 0;
-  uint16_t overflow = 0;
-  size_t count = 0;
-  struct caml_ba_array *a = NULL;
-  unsigned char *addr;
-  while (v_cstruct_list != Val_emptylist) {
-    v_hd = Field(v_cstruct_list, 0);
-    v_cstruct_list = Field(v_cstruct_list, 1);
-    v_ba = Field(v_hd, 0);
-    v_ofs = Field(v_hd, 1);
-    v_len = Field(v_hd, 2);
-    a = Caml_ba_array_val(v_ba);
-    addr = a->data + Int_val(v_ofs);
-    count = Int_val(v_len);
-    if (count <= 0) continue;
-    if (overflow != 0) {
-      sum += (overflow << 8) + (*addr);
-      overflow = 0;
-      addr++;
-      count--;
-    }
-    while (count > 1) {
-      uint16_t v = (*addr << 8) + (*(addr+1));
-      sum += v;
-      count -= 2;
-      addr += 2;
-    }
-    if (count > 0) {
-      if (v_cstruct_list == Val_emptylist)
-        sum += (*(unsigned char *)addr) << 8;
-      else
-        overflow = *addr;
-    }
-  }
-  if (overflow != 0)
-    sum += overflow << 8;
-  while (sum >> 16)
-    sum = (sum & 0xffff) + (sum >> 16);
-  checksum = ~sum;
-  CAMLreturn(Val_int(checksum));
-}
-
-#endif
