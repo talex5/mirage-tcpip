@@ -15,3 +15,4 @@
  *)
 
 module Make ( N:V1_LWT.ETHIF ) : V1_LWT.IPV4 with type ethif = N.t
+module Make2 ( N:V2_LWT.ETHIF ) : V2_LWT.IPV4 with type ethif = N.t

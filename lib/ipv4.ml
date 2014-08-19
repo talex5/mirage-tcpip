@@ -18,7 +18,7 @@ open Lwt
 open Printf
 open Wire_structs
 
-module Make(Ethif : V1_LWT.ETHIF) = struct
+module Make2(Ethif : V2_LWT.ETHIF) = struct
 
   (** IO operation errors *)
   type error = [
@@ -107,12 +107,12 @@ module Make(Ethif : V1_LWT.ETHIF) = struct
     let ihl = 5 in (* TODO options *)
     let tlen = (ihl * 4) + (Cstruct.len data) in
     adjust_output_header ~tlen frame;
-    Ethif.writev t.ethif [frame;data]
+    Ethif.writev2 ~needs_checksum:true t.ethif [frame;data]   (* TODO: needs_checksum -> arg *)
 
   let writev t ethernet_frame bufs =
     let tlen = Cstruct.len ethernet_frame - sizeof_ethernet + (Cstruct.lenv bufs) in
     adjust_output_header ~tlen ethernet_frame;
-    Ethif.writev t.ethif (ethernet_frame::bufs)
+    Ethif.writev2 ~needs_checksum:true t.ethif (ethernet_frame::bufs)
 
   let icmp_input t src hdr buf =
     match get_icmpv4_ty buf with
@@ -185,4 +185,15 @@ module Make(Ethif : V1_LWT.ETHIF) = struct
 
   let get_ipv4_gateways {gateways} = gateways
 
+end
+
+module Make(Ethif : V1_LWT.ETHIF) = struct
+  module Ethif2 = struct
+    include Ethif
+
+    let writev2 ?(needs_checksum=false) t bufs =
+      if needs_checksum then failwith "V1 can't do checksum offload";
+      writev t bufs
+  end
+  include Make2(Ethif2)
 end

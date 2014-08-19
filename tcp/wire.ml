@@ -83,9 +83,11 @@ let xmit ~ip ~id ?(rst=false) ?(syn=false) ?(fin=false) ?(psh=false)
   set_tcpv4_window tcp_frame window;
   set_tcpv4_checksum tcp_frame 0;
   set_tcpv4_urg_ptr tcp_frame 0;
+(*
   let header = Cstruct.shift ethernet_frame header_len in
   let checksum = checksum ~src:id.local_ip ~dst:id.dest_ip (header::datav) in
   set_tcpv4_checksum tcp_frame checksum;
+*)
   (*
   printf "TCP.xmit checksum %04x %s.%d->%s.%d rst %b syn %b fin %b psh %b seq %lu ack %lu %s datalen %d datafrag %d dataoff %d olen %d\n%!"
     checksum

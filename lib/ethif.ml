@@ -18,7 +18,7 @@
 open Lwt
 open Wire_structs
 
-module Make(Netif : V1_LWT.NETWORK) = struct
+module Make2(Netif : V2_LWT.NETWORK) = struct
 
   type id = Netif.t
   type 'a io = 'a Lwt.t
@@ -60,6 +60,9 @@ module Make(Netif : V1_LWT.NETWORK) = struct
   let writev t bufs =
     Netif.writev t.netif bufs
 
+  let writev2 ?(needs_checksum=false) t bufs =
+    Netif.writev2 ~needs_checksum t.netif bufs
+
   let connect netif =
     let arp =
       let get_mac () = Netif.mac netif in
@@ -77,4 +80,15 @@ module Make(Netif : V1_LWT.NETWORK) = struct
 
   let mac t = Netif.mac t.netif
   let get_netif t = t.netif
+end
+
+module Make(Netif : V1_LWT.NETWORK) = struct
+  module V2_NET = struct
+    include Netif
+
+    let writev2 ~needs_checksum t bufs =
+      if needs_checksum then failwith "V1 can't do checksum offload";
+      writev t bufs
+  end
+  include Make2(V2_NET)
 end
