@@ -14,7 +14,7 @@ Library tcpip
   Modules:            Wire_structs, Tcpip_checksum
   CSources:           checksum_stubs.c
   CCOpt:              -O2
-  BuildDepends:       io-page,mirage-types,ipaddr,cstruct
+  BuildDepends:       io-page,mirage-types,ipaddr,cstruct,mirage-profile
 
 Library ethif
   CompiledObject:     best

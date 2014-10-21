@@ -39,6 +39,7 @@ module Make(Netif : V1_LWT.NETWORK) = struct
   let id t = t.netif
 
   let input ~ipv4 ~ipv6 t frame =
+    Profile.label "ethif.input";
     match Wire_structs.get_ethernet_ethertype frame with
     | 0x0806 -> Arpv4.input t.arp frame (* ARP *)
     | 0x0800 -> (* IPv4 *)
@@ -53,12 +54,15 @@ module Make(Netif : V1_LWT.NETWORK) = struct
       return_unit
 
   let write t frame =
+    Profile.label "ethif.write";
     Netif.write t.netif frame
 
   let writev t bufs =
+    Profile.label "ethif.writev";
     Netif.writev t.netif bufs
 
   let connect netif =
+    Profile.label "ethif.connect";
     let arp =
       let get_mac () = Netif.mac netif in
       let get_etherbuf () = return (Io_page.to_cstruct (Io_page.get 1)) in

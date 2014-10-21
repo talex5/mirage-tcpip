@@ -73,6 +73,7 @@ let prettyprint t =
 
 (* Input handler for an ARP packet, registered through attach() *)
 let rec input t frame =
+  Profile.label "arpv4.input";
   match get_arp_op frame with
   |1 -> (* Request *)
     (* Received ARP request, check if we can satisfy it from
