@@ -101,5 +101,6 @@ module Make (Ipv4:V1_LWT.IPV4) = struct
     rst syn fin psh sequence ack_number (Options.prettyprint options)
     (Cstruct.lenv datav) (List.length datav) data_off options_len;
   *)
+    Profile.note_increase "tcp-to-ip" (Cstruct.lenv datav);
     Ipv4.writev ip ethernet_frame datav
 end
