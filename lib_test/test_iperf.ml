@@ -100,7 +100,17 @@ module Test_iperf (B : Vnetif_backends.Backend) = struct
       Cstruct.blit_from_string msg 0 a 0 mlen;
       let rec loop = function
         | 0 -> Lwt.return_unit
-        | n -> write_and_check flow a >>= fun () -> loop (n-1)
+        | n ->
+            let wac = write_and_check flow a in
+            let t0 = Unix.gettimeofday () in
+            wac >>= fun () ->
+            let t1 = Unix.gettimeofday () in
+            if t1 -. t0 > 1.0 then (
+              MProf.Trace.label "ABORT";
+              print_endline "write_and_check took > 1s!";
+              exit 1
+            );
+            loop (n-1)
       in
       loop (amt / mlen) >>= fun () ->
       let a = Cstruct.sub a 0 (amt - (mlen * (amt/mlen))) in
@@ -211,13 +221,23 @@ let test_tcp_iperf_two_stacks_trailing_bytes amt () =
     "tests/pcap/tcp_iperf_two_stacks_trailing_bytes.pcap"
     (Test.tcp_iperf amt)
 
+let () =
+  let open Tcp in
+  [Segment.info; Segment.debug; Pcb.info; Pcb.debug] |> List.iter (fun log ->
+    Log.enable log;
+    Log.set_stats log false
+  )
+
 let test_tcp_iperf_two_stacks_uniform_packet_loss amt () =
   let module Test = Test_iperf (Vnetif_backends.Uniform_packet_loss) in
+  let buffer = MProf_unix.mmap_buffer ~size:1000000 "trace.ctf" in
+  let trace_config = MProf.Trace.Control.make buffer MProf_unix.timestamper in
+  MProf.Trace.Control.start trace_config;
   Test.record_pcap
     "tests/pcap/tcp_iperf_two_stacks_uniform_packet_loss.pcap"
     (Test.tcp_iperf amt)
 
-let amt_quick = 10_000_000
+let amt_quick = 25_000_000
 let amt_slow  = amt_quick * 100
 
 let suite = [
