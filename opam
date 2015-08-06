@@ -20,10 +20,6 @@ build: [
   ["./configure" "--prefix" prefix "--%{mirage-xen:enable}%-xen"]
   [make]
 ]
-build-test: [
-  ["./configure" "--enable-tests"]
-  [make "test" "TESTFLAGS=-v"]
-]
 
 install: [make "install"]
 remove: ["ocamlfind" "remove" "tcpip"]
