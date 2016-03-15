@@ -68,9 +68,7 @@ struct
     tcpv4_listeners: (int, (Tcpv4.flow -> unit Lwt.t)) Hashtbl.t;
   }
 
-  type error = [
-      `Unknown of string
-  ]
+  type error
 
   let tcpv4 { tcpv4; _ } = tcpv4
   let udpv4 { udpv4; _ } = udpv4
@@ -175,7 +173,7 @@ struct
        application stack that the IP address has changed (perhaps via a control
        Lwt_stream that the application can ignore if it doesn't care). *)
     Log.info (fun f -> f "Manager: configuration done");
-    Lwt.return (`Ok t)
+    Lwt.return t
 
   let disconnect _t =
     (* TODO: kill the listening thread *)

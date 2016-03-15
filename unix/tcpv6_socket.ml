@@ -41,6 +41,8 @@ let error_message = function
   | `Timeout -> "Timeout while attempting to connect"
   | `Refused -> "Connection refused"
 
+let pp_error f e = Format.pp_print_string f (error_message e)
+
 let connect addr =
   let t =
     match addr with

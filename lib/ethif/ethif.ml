@@ -28,10 +28,13 @@ module Make(Netif : V1_LWT.NETWORK) = struct
   type netif = Netif.t
 
   type error = [
-    | `Unknown of string
     | `Unimplemented
     | `Disconnected
   ]
+
+  let pp_error f = function
+    | `Unimplemented -> Format.pp_print_string f "Unimplemented"
+    | `Disconnected -> Format.pp_print_string f "Disconnected"
 
   type t = {
     netif: Netif.t;
@@ -70,7 +73,7 @@ module Make(Netif : V1_LWT.NETWORK) = struct
     MProf.Trace.label "ethif.connect";
     let t = { netif } in
     Log.info (fun f -> f "Connected Ethernet interface %s" (Macaddr.to_string (mac t)));
-    Lwt.return (`Ok t)
+    Lwt.return t
 
   let disconnect t =
     Log.info (fun f -> f "Disconnected Ethernet interface %s" (Macaddr.to_string (mac t)));

@@ -40,13 +40,15 @@ let error_message = function
   | `Timeout -> "Timeout while attempting to connect"
   | `Refused -> "Connection refused"
 
+let pp_error f e = Format.pp_print_string f (error_message e)
+
 let connect id =
   let t =
     match id with
     | None -> { interface=None }
     | Some ip -> { interface=Some (Ipaddr_unix.V4.to_inet_addr ip) }
   in
-  return (`Ok t)
+  return t
 
 let disconnect _ =
   return_unit

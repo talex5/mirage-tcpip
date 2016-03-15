@@ -42,6 +42,11 @@ module Make(IP:V1_LWT.IP)(TM:V1_LWT.TIME)(C:V1.CLOCK)(R:V1.RANDOM) = struct
     | `Refused
   ]
 
+  let pp_error f = function
+    | `Unknown msg -> Format.pp_print_string f msg
+    | `Timeout -> Format.pp_print_string f "Timeout"
+    | `Refused -> Format.pp_print_string f "Refused"
+
   let err_timeout daddr dport =
     Log.debug (fun fmt ->
         fmt "Failed to connect to %a:%d\n%!"
@@ -83,7 +88,7 @@ module Make(IP:V1_LWT.IP)(TM:V1_LWT.TIME)(C:V1.CLOCK)(R:V1.RANDOM) = struct
   let writev t views = Pcb.writev t views >|= err_rewrite
   let write_nodelay t view = Pcb.write_nodelay t view >>= err_raise
   let writev_nodelay t views = Pcb.writev_nodelay t views >>= err_raise
-  let connect ipv4 = ok (Pcb.create ipv4)
+  let connect ipv4 = Lwt.return (Pcb.create ipv4)
   let disconnect _ = Lwt.return_unit
 
   let create_connection tcp (daddr, dport) =

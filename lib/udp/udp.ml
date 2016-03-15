@@ -31,10 +31,7 @@ module Make(Ip: V1_LWT.IP) = struct
   type ipinput = src:ipaddr -> dst:ipaddr -> buffer -> unit io
   type callback = src:ipaddr -> dst:ipaddr -> src_port:int -> Cstruct.t -> unit Lwt.t
 
-  (** IO operation errors *)
-  type error = [
-    | `Unknown of string (** an undiagnosed error *)
-  ]
+  type error
 
   type t = {
     ip : Ip.t;
@@ -74,7 +71,7 @@ module Make(Ip: V1_LWT.IP) = struct
   let connect ip =
     let ips = List.map Ip.to_uipaddr @@ Ip.get_ip ip in
     Log.info (fun f -> f "UDP interface connected on %a" pp_ips ips);
-    Lwt.return (`Ok { ip })
+    Lwt.return { ip }
 
   let disconnect t =
     let ips = List.map Ip.to_uipaddr @@ Ip.get_ip t.ip in

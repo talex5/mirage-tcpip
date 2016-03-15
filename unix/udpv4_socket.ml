@@ -44,14 +44,12 @@ type error = [
 ]
 
 let connect (id:ip) =
-  let t =
-    let listen_fds = Hashtbl.create 7 in
-    let interface =
-      match id with
-      | None -> Ipaddr_unix.V4.to_inet_addr Ipaddr.V4.any
-      | Some ip -> Ipaddr_unix.V4.to_inet_addr ip
-    in { interface; listen_fds }
-  in return (`Ok t)
+  let listen_fds = Hashtbl.create 7 in
+  let interface =
+    match id with
+    | None -> Ipaddr_unix.V4.to_inet_addr Ipaddr.V4.any
+    | Some ip -> Ipaddr_unix.V4.to_inet_addr ip
+  in return { interface; listen_fds }
 
 let disconnect _ =
   return_unit

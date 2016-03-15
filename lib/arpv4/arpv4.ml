@@ -196,7 +196,7 @@ module Make (Ethif : V1_LWT.ETHIF) (Clock : V1.CLOCK) (Time : V1_LWT.TIME) = str
     let bound_ips = [] in
     let t = { ethif; cache; bound_ips } in
     Lwt.async (tick t);
-    Lwt.return (`Ok t)
+    Lwt.return t
 
   let disconnect t =
     Log.info (fun f -> f "Disconnected arpv4 device on %s" (Macaddr.to_string (

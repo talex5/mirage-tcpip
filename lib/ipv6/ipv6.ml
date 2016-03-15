@@ -34,8 +34,10 @@ module Make (E : V1_LWT.ETHIF) (T : V1_LWT.TIME) (C : V1.CLOCK) = struct
       mutable ctx : Ndpv6.context }
 
   type error =
-    [ `Unimplemented
-    | `Unknown of string ]
+    [ `Unimplemented ]
+
+  let pp_error f = function
+    | `Unimplemented -> Format.pp_print_string f "Unimplemented"
 
   let start_ticking t =
     let rec loop () =
@@ -137,6 +139,6 @@ module Make (E : V1_LWT.ETHIF) (T : V1_LWT.TIME) (C : V1.CLOCK) = struct
     (netmask, Lwt_list.iter_s (set_ip_netmask t)) >>=? fun () ->
     (gateways, set_ip_gateways t) >>=? fun () ->
     Lwt.async (fun () -> start_ticking t);
-    Lwt.return (`Ok t)
+    Lwt.return t
 
 end

@@ -22,11 +22,7 @@ module Log = (val Logs.src_log src : Logs.LOG)
 
 module Make(Ethif: V1_LWT.ETHIF) (Arpv4 : V1_LWT.ARP) = struct
 
-  (** IO operation errors *)
-  type error = [
-    | `Unknown of string (** an undiagnosed error *)
-    | `Unimplemented     (** operation not yet implemented in the code *)
-  ]
+  type error
 
   type ethif = Ethif.t
   type 'a io = 'a Lwt.t
@@ -164,8 +160,7 @@ module Make(Ethif: V1_LWT.ETHIF) (Arpv4 : V1_LWT.ARP) = struct
       ?(ip=Ipaddr.V4.any)
       ?(netmask=Ipaddr.V4.any)
       ?(gateways=[]) ethif arp =
-    let t = { ethif; arp; ip; netmask; gateways } in
-    Lwt.return (`Ok t)
+    Lwt.return { ethif; arp; ip; netmask; gateways }
 
   let disconnect _ = Lwt.return_unit
 
