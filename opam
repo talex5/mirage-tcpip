@@ -43,7 +43,7 @@ depends: [
   "ocamlfind" {build}
   "result"
   "rresult"
-  "cstruct" {>= "2.1.0"}
+  "cstruct" {>= "2.2.0"}
   "ppx_tools" {build}
   "mirage-net" {>= "1.0.0"}
   "mirage-net-lwt" {>= "1.0.0"}
