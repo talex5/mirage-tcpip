@@ -85,7 +85,7 @@ let unmarshal buf =
              | 5, _ ->
                let num = (option_length - 2) / 8 in
                let rec to_int32_list off acc = function
-                 |0 -> acc
+                 |0 -> List.rev acc
                  |n ->
                    let x =
                      Cstruct.BE.get_uint32 buf off,
